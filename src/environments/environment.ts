@@ -1,3 +1,16 @@
 export const environment = {
-  production: false
+  production: false,
+  firebaseConfig: {
+    apiKey: "AIzaSyCAo1pwhGsbbCSG2jI_sq9kRHvk-Our_-c",
+    authDomain: "di02te01-3.firebaseapp.com",
+    projectId: "di02te01-3",
+    storageBucket: "di02te01-3.firebasestorage.app",
+    messagingSenderId: "245431973931",
+    appId: "1:245431973931:web:fd1aa7ccfc2208a7a4d26e"
+  },
+  // Usuario de prueba creado en Firebase Authentication
+  testUser: {
+    email: "lbergareche@ikaslea.birt.eus",
+    password: "red13XIII_"
+  }
 };

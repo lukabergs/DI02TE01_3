@@ -1,0 +1,81 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="cancelar()">Cancelar</ion-button>
+    </ion-buttons>
+    <ion-title>Nuevo restaurante</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <form [formGroup]="form" (ngSubmit)="guardar()">
+    <ion-list>
+
+      <!-- H6 y H10: todos los campos con label y placeholder de ejemplo -->
+      <ion-item>
+        <ion-input formControlName="documentName" label="Nombre *" labelPlacement="stacked"
+          placeholder="Ej: Agorregi"></ion-input>
+      </ion-item>
+      <!-- H9: mensaje que dice que campo falta -->
+      @if (documentName.invalid && documentName.touched) {
+        <ion-note color="danger">El nombre es obligatorio.</ion-note>
+      }
+
+      <ion-item>
+        <ion-select formControlName="territory" label="Territorio *" labelPlacement="stacked"
+          placeholder="Ej: Bizkaia" cancelText="Cancelar" okText="Aceptar">
+          @for (t of territorios; track t) {
+            <ion-select-option [value]="t">{{ t }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
+      @if (territory.invalid && territory.touched) {
+        <ion-note color="danger">El territorio es obligatorio.</ion-note>
+      }
+
+      <ion-item>
+        <ion-input formControlName="locality" label="Localidad" labelPlacement="stacked"
+          placeholder="Ej: Getxo"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-input formControlName="address" label="Dirección" labelPlacement="stacked"
+          placeholder="Ej: Portuetxe, 14"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-input formControlName="phone" type="tel" label="Teléfono" labelPlacement="stacked"
+          placeholder="9XX XXX XXX"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-input formControlName="web" type="url" label="Web" labelPlacement="stacked"
+          placeholder="https://..."></ion-input>
+      </ion-item>
+
+      <!-- H10: el rango valido aparece en la propia etiqueta -->
+      <ion-item>
+        <ion-input formControlName="michelinStar" type="number" label="Estrellas Michelin (0-3)"
+          labelPlacement="stacked"></ion-input>
+      </ion-item>
+      @if (michelinStar.invalid && michelinStar.touched) {
+        <ion-note color="danger">Introduce un número entre 0 y 3.</ion-note>
+      }
+
+      <ion-item>
+        <ion-input formControlName="repsolSun" type="number" label="Soles Repsol (0-3)"
+          labelPlacement="stacked"></ion-input>
+      </ion-item>
+      @if (repsolSun.invalid && repsolSun.touched) {
+        <ion-note color="danger">Introduce un número entre 0 y 3.</ion-note>
+      }
+
+    </ion-list>
+
+    <!-- H5: no se puede guardar hasta que el formulario sea valido -->
+    <!-- H1: el boton cambia a "Guardando..." mientras se sube a Firebase -->
+    <ion-button type="submit" expand="block" [disabled]="form.invalid || guardando()">
+      {{ guardando() ? 'Guardando...' : 'Guardar' }}
+    </ion-button>
+  </form>
+</ion-content>

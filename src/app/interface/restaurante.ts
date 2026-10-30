@@ -1,4 +1,5 @@
 export interface Restaurante {
+  id?: string;
   documentName: string;
   documentDescription: string;
   templateType: string;

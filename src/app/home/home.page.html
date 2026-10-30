@@ -1,11 +1,30 @@
 <ion-header>
   <ion-toolbar>
     <ion-title>Guía de Restaurantes Euskadi</ion-title>
+    <!-- H4: los tres botones con icono + texto -->
+    <!-- H10: title en cada boton para explicar lo que hace -->
+    <!-- H5: se deshabilitan mientras hay una operacion en curso -->
     <ion-buttons slot="end">
       <ion-button
         (click)="cargarDatos()"
-        title="Cargar restaurantes desde el archivo JSON local">
-        Cargar datos
+        [disabled]="cargando() || importando()"
+        title="Cargar restaurantes desde el servidor">
+        <ion-icon slot="start" name="cloud-download-outline"></ion-icon>
+        Cargar
+      </ion-button>
+      <ion-button
+        (click)="confirmarImportacion()"
+        [disabled]="cargando() || importando()"
+        title="Sustituir los restaurantes del servidor por los del archivo JSON">
+        <ion-icon slot="start" name="cloud-upload-outline"></ion-icon>
+        Importar
+      </ion-button>
+      <ion-button
+        (click)="abrirModalAgregar()"
+        [disabled]="cargando() || importando()"
+        title="Añadir un restaurante nuevo">
+        <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+        Añadir
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
@@ -13,17 +32,30 @@
 
 <ion-content class="ion-padding">
 
-  <!-- Añadir mensaje cuando no hay datos -->
-  @if (!hayDatos()) {
+  <!-- H10 y H8: mensaje de ayuda que solo sale cuando todavia no hay datos -->
+  @if (!hayDatos() && !cargando()) {
     <ion-item lines="none" color="light" style="border-radius: 8px;">
       <ion-label class="ion-text-wrap">
-        Pulsa <strong>Cargar datos</strong> para ver los restaurantes disponibles.
+        Pulsa <strong>Cargar</strong> para ver los restaurantes disponibles.
         Una vez cargados, podrás filtrar por nombre, territorio y localidad.
       </ion-label>
     </ion-item>
   }
 
+  <!-- H1: el usuario sabe que se esta cargando o importando y que la app no se ha colgado -->
+  @if (cargando()) {
+    <ion-item lines="none">
+      <ion-label>Cargando restaurantes...</ion-label>
+    </ion-item>
+  }
+  @if (importando()) {
+    <ion-item lines="none">
+      <ion-label class="ion-text-wrap">Importando restaurantes, puede tardar un poco...</ion-label>
+    </ion-item>
+  }
+
   <!-- Filtros -->
+  <!-- H7: busqueda por nombre, territorio y varias localidades a la vez -->
   <ion-grid>
     <ion-row class="ion-align-items-center ion-justify-content-start">
       <!-- Filtro de búsqueda -->
@@ -68,6 +100,7 @@
           --Si ponemos el ion-label fuera del ion-item, el click solo se activará al hacer click en el texto del label, lo que no es tan cómodo para el usuario
           -->
         <!--Si tenemos muchas localidades seleccionadas, estas se recortan mediante..., por eso añadimos [title] para mostrar un tooltip cuando ponemos el ratón sobre ella -->
+        <!-- H6: con el tooltip se ven las localidades elegidas sin tener que abrir el select -->
         <!--<ion-label>Localidad</ion-label>-->
         <ion-item>          
           <ion-select
@@ -91,6 +124,7 @@
   </ion-grid>
 
   <!-- Contador de restaurantes filtrados -->
+  <!-- H6: el usuario no tiene que contar las filas -->
   @if (hayDatos()) {
     <ion-item lines="none">
       <ion-label>
@@ -104,6 +138,7 @@
   }
 
   <!-- Tabla de restaurantes -->
+  <!-- H8: la tabla solo se muestra si hay resultados -->
   @if (restaurantesFiltrados().length > 0) {
     <div class="table-wrapper">
       <table class="restaurantes-table">
@@ -117,10 +152,11 @@
             <th>Web</th>
             <th>Estrellas Michelin</th>
             <th>Soles Repsol</th>
+            <th>Borrar</th>
           </tr>
         </thead>
         <tbody>
-          @for (r of restaurantesFiltrados(); track r.documentName) {
+          @for (r of restaurantesFiltrados(); track r.id) {
             <tr>
               <td class="col-nombre">{{ r.documentName }}</td>
               <td>{{ r.locality }}</td>
@@ -140,6 +176,13 @@
               <td class="center">
                 {{ repsolSoles(r) > 0 ? repsolSoles(r) : '-' }}
               </td>
+              <!-- H2: icono de papelera para borrar -->
+              <td class="center">
+                <ion-button fill="clear" color="danger" title="Borrar restaurante"
+                  [disabled]="importando()" (click)="confirmarBorrado(r)">
+                  <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                </ion-button>
+              </td>
             </tr>
           }
         </tbody>
@@ -147,6 +190,7 @@
     </div>
   } @else {
     <!-- Mensaje cuando no hay restaurantes que coincidan con los filtros -->
+    <!-- H9 y H3: se explica por que no hay resultados y se da la opcion de limpiar los filtros -->
     @if (hayDatos()) {
       <ion-item lines="none" color="warning" style="margin-top: 16px; border-radius: 8px;">
         <ion-label class="ion-text-wrap">
