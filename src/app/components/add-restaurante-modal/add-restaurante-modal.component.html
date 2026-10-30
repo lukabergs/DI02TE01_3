@@ -47,11 +47,17 @@
         <ion-input formControlName="phone" type="tel" label="Teléfono" labelPlacement="stacked"
           placeholder="9XX XXX XXX"></ion-input>
       </ion-item>
+      @if (phone.invalid && phone.touched) {
+        <ion-note color="danger">El teléfono tiene que ser como 943 224 328 (9 números en grupos de 3).</ion-note>
+      }
 
       <ion-item>
         <ion-input formControlName="web" type="url" label="Web" labelPlacement="stacked"
           placeholder="https://..."></ion-input>
       </ion-item>
+      @if (web.invalid && web.touched) {
+        <ion-note color="danger">La web tiene que empezar por http:// o https://</ion-note>
+      }
 
       <!-- H10: el rango valido aparece en la propia etiqueta -->
       <ion-item>

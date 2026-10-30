@@ -3,10 +3,13 @@ import restaurantesJSON from '../../assets/datos/restaurantes.json';
 import {
   ToastController, AlertController, ModalController,
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonContent,
-  IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonGrid, IonRow, IonCol
+  IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonGrid, IonRow, IonCol, IonChip
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { cloudDownloadOutline, cloudUploadOutline, addCircleOutline, trashOutline } from 'ionicons/icons';
+import {
+  cloudDownloadOutline, cloudUploadOutline, addCircleOutline, trashOutline,
+  closeCircleOutline, lockClosedOutline, star, sunny, globeOutline
+} from 'ionicons/icons';
 import { Restaurante } from '../interface/restaurante';
 import { RestauranteService } from '../services/restaurante.service';
 import { AddRestauranteModalComponent } from '../components/add-restaurante-modal/add-restaurante-modal.component';
@@ -15,7 +18,7 @@ import { AddRestauranteModalComponent } from '../components/add-restaurante-moda
   selector: 'app-home',
   imports: [
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonContent,
-    IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonGrid, IonRow, IonCol
+    IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonGrid, IonRow, IonCol, IonChip
   ],
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss']
@@ -23,7 +26,11 @@ import { AddRestauranteModalComponent } from '../components/add-restaurante-moda
 export class HomePage {
 
   constructor() {
-    addIcons({ cloudDownloadOutline, cloudUploadOutline, addCircleOutline, trashOutline });
+    // en standalone hay que registrar los iconos que se usan, si no no salen
+    addIcons({
+      cloudDownloadOutline, cloudUploadOutline, addCircleOutline, trashOutline,
+      closeCircleOutline, lockClosedOutline, star, sunny, globeOutline
+    });
   }
 
   // ############################### REGION DATOS ###############################
@@ -46,12 +53,15 @@ export class HomePage {
   hayDatos = computed(() => this.restaurantesCargados().length > 0);
 
   // Lee todos los restaurantes de Firebase y los guarda en el signal
-  async cargarDatos() {
+  // con avisar = false no sale el toast de "X restaurantes cargados" (para cuando ya mostramos otro)
+  async cargarDatos(avisar = true) {
     this.cargando.set(true);
     try {
       const datos = await this.restauranteService.getAll();
       this.restaurantesCargados.set(datos);
-      this.mostrarToast(`${datos.length} restaurantes cargados`, 'success');
+      if (avisar) {
+        this.mostrarToast(`${datos.length} restaurantes cargados`, 'success');
+      }
     } catch (error) {
       this.mostrarToast(this.mensajeError(error, 'cargar los datos'), 'danger');
     } finally {
@@ -98,7 +108,8 @@ export class HomePage {
 
     const { role } = await modal.onWillDismiss();
     if (role === 'confirm') {
-      await this.cargarDatos();
+      await this.cargarDatos(false);
+      this.mostrarToast('Restaurante añadido correctamente', 'success');
     }
   }
 
@@ -121,13 +132,42 @@ export class HomePage {
       await this.restauranteService.delete(r.id!);
       // Actualizamos el signal para que la tabla se repinte sin volver a pedir los datos
       this.restaurantesCargados.update(lista => lista.filter(x => x.id !== r.id));
-      this.mostrarToast(`${r.documentName} borrado`, 'success');
+      this.mostrarToastDeshacer(r);
     } catch (error) {
       this.mostrarToast(this.mensajeError(error, 'borrar el restaurante'), 'danger');
     }
   }
 
-  // H9 y H4: el mismo error da siempre el mismo mensaje, diferenciando permisos de problemas de conexión
+  // H3: toast con boton Deshacer por si se ha borrado sin querer
+  async mostrarToastDeshacer(r: Restaurante) {
+    const toast = await this.toastCtrl.create({
+      message: `${r.documentName} borrado`,
+      duration: 6000,
+      color: 'success',
+      position: 'bottom',
+      buttons: [
+        { text: 'Deshacer', handler: () => { this.deshacerBorrado(r); } },
+        { text: 'X', role: 'cancel' }
+      ]
+    });
+    await toast.present();
+  }
+
+  // Vuelve a subir el restaurante borrado
+  async deshacerBorrado(r: Restaurante) {
+    // quitamos el id viejo, firebase le pone uno nuevo al añadirlo
+    const { id, ...datos } = r;
+    try {
+      await this.restauranteService.add(datos as Restaurante);
+      await this.cargarDatos(false);
+      this.mostrarToast(`${r.documentName} recuperado`, 'success');
+    } catch (error) {
+      this.mostrarToast(this.mensajeError(error, 'deshacer el borrado'), 'danger');
+    }
+  }
+
+  // H9: el mensaje dice si el fallo es de permisos (reglas de firebase) o de conexion
+  // H4: lo usan todos los catch, asi el mismo error siempre da el mismo mensaje
   mensajeError(error: any, accion: string): string {
     if (error?.code === 'permission-denied') {
       return 'No tienes permisos en el servidor. Revisa las reglas de seguridad.';
@@ -205,6 +245,11 @@ export class HomePage {
   // Actualiza las localidades seleccionadas con los valores del evento
   onLocalidadesChange(value: string[]) {
     this.localidadesSeleccionadas.set(value);
+  }
+
+  // quita una sola localidad (al pulsar su chip)
+  quitarLocalidad(loc: string) {
+    this.localidadesSeleccionadas.update(lista => lista.filter(l => l !== loc));
   }
 
   // ############################### REGION RESULTADOS ###############################

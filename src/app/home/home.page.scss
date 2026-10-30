@@ -25,6 +25,10 @@
 
 :host ::ng-deep {
 
+  .chips-filtros {
+    margin: 4px 0 8px;
+  }
+
   .table-wrapper {
     width: 100%;
     overflow-x: auto;

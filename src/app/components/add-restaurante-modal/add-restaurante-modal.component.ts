@@ -29,20 +29,23 @@ export class AddRestauranteModalComponent {
 
   territorios = ['Araba/Álava', 'Bizkaia', 'Gipuzkoa'];
 
-  // H5: validaciones para no guardar restaurantes sin nombre/territorio o con valores fuera de rango
+  // H5: validaciones para no guardar restaurantes sin nombre/territorio, telefono con el mismo formato que el JSON,
+  // la web tiene que ser un enlace y michelin/repsol solo de 0 a 3
   form: FormGroup = this.fb.group({
     documentName: ['', Validators.required],
     territory: ['', Validators.required],
     locality: [''],
     address: [''],
-    phone: [''],
-    web: [''],
+    phone: ['', Validators.pattern(/^\d{3} \d{3} \d{3}$/)],
+    web: ['', Validators.pattern(/^https?:\/\/.+/)],
     michelinStar: [0, [Validators.min(0), Validators.max(3)]],
     repsolSun: [0, [Validators.min(0), Validators.max(3)]],
   });
 
   get documentName() { return this.form.get('documentName')!; }
   get territory() { return this.form.get('territory')!; }
+  get phone() { return this.form.get('phone')!; }
+  get web() { return this.form.get('web')!; }
   get michelinStar() { return this.form.get('michelinStar')!; }
   get repsolSun() { return this.form.get('repsolSun')!; }
 

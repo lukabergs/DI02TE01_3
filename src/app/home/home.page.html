@@ -68,6 +68,11 @@
             [disabled]="!hayDatos()"
             (ionInput)="textoBusqueda.set($event.detail.value ?? '')">
           </ion-input>
+          <!-- H3: cada filtro tiene su X para quitarlo solo a el. H6: la X solo se activa si hay algo que borrar -->
+          <ion-button slot="end" fill="clear" title="Limpiar búsqueda"
+            [disabled]="!textoBusqueda()" (click)="textoBusqueda.set('')">
+            <ion-icon slot="icon-only" name="close-circle-outline"></ion-icon>
+          </ion-button>
         </ion-item>
       </ion-col>
 
@@ -90,6 +95,12 @@
               <ion-select-option [value]="t">{{ t }}</ion-select-option>
             }
           </ion-select>
+          <!-- no se deja quitar el territorio si hay localidades elegidas (igual que en el chip) -->
+          <ion-button slot="end" fill="clear" title="Limpiar territorio"
+            [disabled]="!territorioSeleccionado() || localidadesSeleccionadas().length > 0"
+            (click)="onTerritorioChange('')">
+            <ion-icon slot="icon-only" name="close-circle-outline"></ion-icon>
+          </ion-button>
         </ion-item>
       </ion-col>
 
@@ -118,10 +129,56 @@
               <ion-select-option [value]="loc">{{ loc }}</ion-select-option>
             }
           </ion-select>
+          <ion-button slot="end" fill="clear" title="Limpiar localidades"
+            [disabled]="localidadesSeleccionadas().length === 0"
+            (click)="onLocalidadesChange([])">
+            <ion-icon slot="icon-only" name="close-circle-outline"></ion-icon>
+          </ion-button>
         </ion-item>
       </ion-col>
     </ion-row>
   </ion-grid>
+
+  <!-- Chips con los filtros activos -->
+  <!-- H6 se ve en todo momento que esta filtrado. H8 si no hay filtros no sale nada -->
+  <!-- H4 mismo icono (close-circle-outline) que las X de arriba, y todos se quitan igual, pulsando -->
+  @if (hayFiltrosActivos()) {
+    <div class="chips-filtros">
+      @if (textoBusqueda()) {
+        <ion-chip (click)="textoBusqueda.set('')" title="Quitar búsqueda">
+          <ion-label>Nombre: {{ textoBusqueda() }}</ion-label>
+          <ion-icon name="close-circle-outline"></ion-icon>
+        </ion-chip>
+      }
+
+      @if (territorioSeleccionado()) {
+        <!-- si hay localidades el territorio queda bloqueado, si no las localidades se quedarian sueltas -->
+        @if (localidadesSeleccionadas().length > 0) {
+          <ion-chip color="medium" title="Quita antes las localidades para poder quitar el territorio">
+            <ion-label>Territorio: {{ territorioSeleccionado() }}</ion-label>
+            <ion-icon name="lock-closed-outline"></ion-icon>
+          </ion-chip>
+        } @else {
+          <ion-chip (click)="onTerritorioChange('')" title="Quitar territorio">
+            <ion-label>Territorio: {{ territorioSeleccionado() }}</ion-label>
+            <ion-icon name="close-circle-outline"></ion-icon>
+          </ion-chip>
+        }
+      }
+
+      @for (loc of localidadesSeleccionadas(); track loc) {
+        <ion-chip (click)="quitarLocalidad(loc)" [title]="'Quitar ' + loc">
+          <ion-label>{{ loc }}</ion-label>
+          <ion-icon name="close-circle-outline"></ion-icon>
+        </ion-chip>
+      }
+
+      <!-- H3 / H7 quitar todo de golpe en vez de uno a uno -->
+      <ion-button fill="clear" size="small" (click)="limpiarTodosFiltros()">
+        Limpiar todos los filtros
+      </ion-button>
+    </div>
+  }
 
   <!-- Contador de restaurantes filtrados -->
   <!-- H6: el usuario no tiene que contar las filas -->
@@ -163,23 +220,31 @@
               <td class="col-direccion">{{ r.address }}</td>
               <td class="col-phone">{{ r.phone }}</td>
               <td>{{ r.territory }}</td>
+              <!-- H2: iconos que se reconocen sin leer: globo para la web, estrella Michelin, sol Repsol y papelera -->
               <td class="center">
                 @if (r.web) {
                   <a [href]="r.web" target="_blank" [title]="r.web" class="web-link">
-                    Enlace
+                    <ion-icon name="globe-outline"></ion-icon>
                   </a>
                 }
               </td>
               <td class="center">
-                {{ estrellasMichelin(r) > 0 ? estrellasMichelin(r) : '-' }}
+                @if (estrellasMichelin(r) > 0) {
+                  <ion-icon name="star" color="warning"></ion-icon> {{ estrellasMichelin(r) }}
+                } @else {
+                  -
+                }
               </td>
               <td class="center">
-                {{ repsolSoles(r) > 0 ? repsolSoles(r) : '-' }}
+                @if (repsolSoles(r) > 0) {
+                  <ion-icon name="sunny" color="warning"></ion-icon> {{ repsolSoles(r) }}
+                } @else {
+                  -
+                }
               </td>
-              <!-- H2: icono de papelera para borrar -->
               <td class="center">
                 <ion-button fill="clear" color="danger" title="Borrar restaurante"
-                  [disabled]="importando()" (click)="confirmarBorrado(r)">
+                  [disabled]="cargando() || importando()" (click)="confirmarBorrado(r)">
                   <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
                 </ion-button>
               </td>
